@@ -1,0 +1,13 @@
+﻿add_owner 223232 Zavoianu_Razvan 624303433
+add_prop Studio 23,2334 sell 90 Madrid 1
+add_owner 223232 Marin_Matei 624303433
+add_prop Apartment 90000,00 rent 120 Barcelona 1
+add_prop House 5000000 sell 600 Vigo 1
+add_owner 222444 Agustin 62343432
+add_prop Apartment 300,000 rent 70 Madrid 2
+print_owners
+print_props
+print_props -type rent
+print_props -minarea 100
+print_props -name Apartment
+print_props -address Madrid
