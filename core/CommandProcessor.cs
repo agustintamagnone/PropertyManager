@@ -11,7 +11,6 @@ namespace PropertyManager.core
 {
     internal class CommandProcessor
     {
-        private readonly IdGenerator _idGenerator;
         private readonly OwnerService _ownerService;
         private readonly PropertyService _propertyService;
 
@@ -19,7 +18,6 @@ namespace PropertyManager.core
         {
             _ownerService = ownerService;
             _propertyService = propertyService;
-            _idGenerator = new IdGenerator();
         }
 
         public void ExecuteCommand(string commandLine)
@@ -41,7 +39,7 @@ namespace PropertyManager.core
                 // Use: add_owner 50235345 Zavoianu_Razvan 624300355
                 case "add_owner":
                     {
-                        var a = args.Split(' ');
+                        var claa = args.Split(' ');
                         if (a.Length != 3)
                         {
                             Console.WriteLine("Incorrect command arguments.");
@@ -49,7 +47,7 @@ namespace PropertyManager.core
                         }
                         var success = _ownerService?.AddOwner(
                             new OwnerModel(
-                                _idGenerator.GetNextOwnerId(),
+                                //_idGenerator.GetNextOwnerId(),
                                 a[0],   // National ID
                                 a[1],   // Name
                                 a[2])); // Phone Number
@@ -58,7 +56,7 @@ namespace PropertyManager.core
                         else
                         {
                             Console.WriteLine("Failed to add owner. Owner already exists.");
-                            _idGenerator.DecreaseOwnerId();
+                            //_idGenerator.DecreaseOwnerId();
                         }
                         break;
                     }
@@ -91,7 +89,7 @@ namespace PropertyManager.core
                         }
                         var success = _propertyService.AddProperty(
                             new PropertyModel(
-                                _idGenerator.GetNextPropertyId(),
+                                //_idGenerator.GetNextPropertyId(),
                                 a[0],               // Name
                                 float.Parse(a[1]),  // Price (WITH , )
                                 a[2],               // Type "rent" or "sell"
@@ -104,7 +102,7 @@ namespace PropertyManager.core
                         else
                         {
                             Console.WriteLine("Failed to add property. The owner doesn't exist.");
-                            _idGenerator.DecreasePropertyId();
+                            //_idGenerator.DecreasePropertyId();
                         }
                             break;
                     }

@@ -12,40 +12,41 @@ namespace PropertyManager.services
     {
         public List<OwnerModel> _owners = new List<OwnerModel>();
 
-        public bool AddOwner(OwnerModel owner)
+        public void AddOwner(OwnerModel owner)
         {
-            bool isDuplicate = _owners.Any(o =>
-                o._phoneNumber == owner._phoneNumber || o._nationalId == owner._nationalId);
+            var isDuplicate = _owners.Any(o =>
+                o.PhoneNumber == owner.PhoneNumber || o.NationalId == owner.NationalId);
 
             if (isDuplicate)
-                return false;
-
-            _owners.Add(owner);
-            return true;
+                Console.WriteLine("Owner cannot be added as it already exits.");
+            else
+            {
+                _owners.Add(owner);
+                Console.WriteLine("Owner " + owner.Name + " added succesfully!");
+            }              
         }
 
-        public bool RemoveOwner(int ownerId, List<PropertyModel> properties)
+        public void RemoveOwner(int ownerId, List<PropertyModel> properties)
         {
-            if (!_owners.Any(o => o._id == ownerId))
-                return false;
-
-            properties.RemoveAll(p => p._ownerId == ownerId);
-
-            _owners.RemoveAll(o => o._id == ownerId);
-
-            return true;
+            if (_owners.Any(o => o.Id == ownerId))
+            {
+                properties.RemoveAll(p => p.OwnerId == ownerId);
+                _owners.RemoveAll(o => o.Id == ownerId);
+            }
+            else
+                Console.WriteLine("Owner does not exist.");
         }
 
         public void DisplayOwners(List<PropertyModel> properties)
         {
             foreach (var owner in _owners)
             {
-                int count = properties.Count(p => p._ownerId == owner._id);
+                int count = properties.Count(p => p.OwnerId == owner.Id);
 
-                Console.WriteLine($"Owner ID: {owner._id}");
-                Console.WriteLine($"National ID: {owner._nationalId}");
-                Console.WriteLine($"Name: {owner._name}");
-                Console.WriteLine($"Phone number: {owner._phoneNumber}");
+                Console.WriteLine($"Owner ID: {owner.Id}");
+                Console.WriteLine($"National ID: {owner.NationalId}");
+                Console.WriteLine($"Name: {owner.Name}");
+                Console.WriteLine($"Phone number: {owner.PhoneNumber}");
                 Console.WriteLine($"Properties owned: {count}");
                 Console.WriteLine("-----------------------------------------");
             }

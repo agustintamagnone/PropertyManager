@@ -8,17 +8,17 @@ namespace PropertyManager.models
 {
     internal class OwnerModel
     {
-        public int _id { get; set; }
-        public string? _nationalId { get; set; }
-        public string? _name { get; set; }
-        public string? _phoneNumber { get; set; }
+        public int Id { get; set; }
+        public string? NationalId { get; set; }
+        public string? Name { get; set; }
+        public string? PhoneNumber { get; set; }
 
         public OwnerModel(int id, string nationalId, string name, string phoneNumber) 
         { 
-            _id = id;
-            _nationalId = nationalId;
-            _name = name;
-            _phoneNumber = phoneNumber;
+            Id = id;
+            NationalId = nationalId;
+            Name = name;
+            PhoneNumber = phoneNumber;
         }
     }
 }
