@@ -1,11 +1,6 @@
-﻿using PropertyManager.services;
+﻿using System.Globalization;
 using PropertyManager.models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
+using PropertyManager.services;
 
 namespace PropertyManager.core
 {
@@ -22,150 +17,235 @@ namespace PropertyManager.core
 
         public void ExecuteCommand(string commandLine)
         {
-            if (string.IsNullOrWhiteSpace(commandLine))
-                return;
+            var (cmd, args) = ParseCommandLine(commandLine);
 
-            var parts = commandLine.Split(' ', 2);  // Separates the command from the arguments
-            var cmd = parts[0]; // This will be the command to be run
-            var args = parts.Length > 1 ? parts[1] : "";  // This will contain the rest of the arguments
+            if (string.IsNullOrWhiteSpace(cmd))
+                return;
 
             switch (cmd)
             {
-                // Use: help to get the available commands and allowed arguments
                 case "help":
                     ShowHelp();
                     break;
 
-                // Use: add_owner 50235345 Zavoianu_Razvan 624300355
                 case "add_owner":
-                    {
-                        var claa = args.Split(' ');
-                        if (a.Length != 3)
-                        {
-                            Console.WriteLine("Incorrect command arguments.");
-                            return;
-                        }
-                        var success = _ownerService?.AddOwner(
-                            new OwnerModel(
-                                //_idGenerator.GetNextOwnerId(),
-                                a[0],   // National ID
-                                a[1],   // Name
-                                a[2])); // Phone Number
-                        if (success == true)
-                            Console.WriteLine("Owner added successfully.");
-                        else
-                        {
-                            Console.WriteLine("Failed to add owner. Owner already exists.");
-                            //_idGenerator.DecreaseOwnerId();
-                        }
-                        break;
-                    }
-                
-                // Use: del_owner 4
+                    HandleAddOwner(args);
+                    break;
+
                 case "del_owner":
-                    {
-                        var a = args.Split(' ');
-                        if (a.Length != 1)
-                        {
-                            Console.WriteLine("Incorrect command arguments.");
-                            return;
-                        }
-                        var success = _ownerService?.RemoveOwner(Int32.Parse(a[0]), _propertyService._properties);
-                        if (success == true)
-                            Console.WriteLine("Owner removed successfully.");
-                        else
-                            Console.WriteLine("Failed to remove owner. Owner not found.");
-                        break;
-                    }
+                    HandleDeleteOwner(args);
+                    break;
 
-                // Use: add_prop Studio 22,400 sell 90 Madrid 4
                 case "add_prop":
-                    {
-                        var a = args.Split(' ');
-                        if (a.Length != 6)
-                        {
-                            Console.WriteLine("Incorrect command arguments.");
-                            return;
-                        }
-                        var success = _propertyService.AddProperty(
-                            new PropertyModel(
-                                //_idGenerator.GetNextPropertyId(),
-                                a[0],               // Name
-                                float.Parse(a[1]),  // Price (WITH , )
-                                a[2],               // Type "rent" or "sell"
-                                Int32.Parse(a[3]),  // Area
-                                a[4],               // Address
-                                Int32.Parse(a[5])   // Owner ID
-                            ));
-                        if (success == true)
-                            Console.WriteLine("Property added successfully.");
-                        else
-                        {
-                            Console.WriteLine("Failed to add property. The owner doesn't exist.");
-                            //_idGenerator.DecreasePropertyId();
-                        }
-                            break;
-                    }
+                    HandleAddProperty(args);
+                    break;
 
-                // Use: del_prop 10
                 case "del_prop":
-                    {
-                        var a = args.Split(' ');
-                        if (a.Length != 1)
-                        {
-                            Console.WriteLine("Incorrect command arguments.");
-                            return;
-                        }
-                        var success = _propertyService.RemoveProperty(Int32.Parse(a[0]));
-                        if (success == true)
-                            Console.WriteLine("Property removed successfully.");
-                        else
-                            Console.WriteLine("A property with this id has not been found.");
-                        break;
-                    }
+                    HandleDeleteProperty(args);
+                    break;
 
-                // Use: print_owners
                 case "print_owners":
                     _ownerService.DisplayOwners(_propertyService._properties);
                     break;
 
-                // Use: print_props -type rent -minarea 50 -maxarea 120 -name Studio -address Madrid
                 case "print_props":
-                    {
-                        string? type = null;
-                        int? minArea = null;
-                        int? maxArea = null;
-                        string? name = null;
-                        string? address = null;
+                    HandlePrintProperties(args);
+                    break;
 
-                        var tokens = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < tokens.Length - 1; i++)
-                        {
-                            switch (tokens[i])
-                            {
-                                case "-type":
-                                    type = tokens[++i];
-                                    break;
-                                case "-minarea":
-                                    if (int.TryParse(tokens[++i], out int min)) minArea = min;
-                                    break;
-                                case "-maxarea":
-                                    if (int.TryParse(tokens[++i], out int max)) maxArea = max;
-                                    break;
-                                case "-name":
-                                    name = tokens[++i];
-                                    break;
-                                case "-address":
-                                    address = tokens[++i];
-                                    break;
-                            }
-                        }
+                default:
+                    Console.WriteLine($"Unknown command '{cmd}'. Type 'help' to see available commands.");
+                    break;
+            }
+        }
 
-                        _propertyService.DisplayProperties(_ownerService._owners, type, minArea, maxArea, name, address);
-                        break;
-                    }
+        private static (string Command, string Arguments) ParseCommandLine(string commandLine)
+        {
+            if (string.IsNullOrWhiteSpace(commandLine))
+                return (string.Empty, string.Empty);
+
+            var parts = commandLine.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+            var cmd = parts.Length > 0 ? parts[0] : string.Empty;
+            var args = parts.Length > 1 ? parts[1] : string.Empty;
+
+            return (cmd, args);
+        }
+
+        // add_owner <NationalID> <Name> <PhoneNumber>
+        private void HandleAddOwner(string args)
+        {
+            var tokens = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length != 3)
+            {
+                Console.WriteLine("Incorrect command arguments.");
+                Console.WriteLine("Usage: add_owner <NationalID> <Name> <PhoneNumber>");
+                return;
             }
 
+            var nationalId = tokens[0];
+            var name = tokens[1];
+            var phone = tokens[2];
+
+            // Assumes OwnerService.AddOwner(string, string, string)
+            _ownerService.AddOwner(nationalId, name, phone);
+        }
+
+        // del_owner <OwnerID>
+        private void HandleDeleteOwner(string args)
+        {
+            var tokens = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length != 1)
+            {
+                Console.WriteLine("Incorrect command arguments.");
+                Console.WriteLine("Usage: del_owner <OwnerID>");
+                return;
+            }
+
+            if (!int.TryParse(tokens[0], out int ownerId))
+            {
+                Console.WriteLine("Invalid owner ID.");
+                return;
+            }
+
+            var success = _ownerService.RemoveOwner(ownerId, _propertyService._properties);
+            if (!success)
+            {
+                Console.WriteLine("Failed to remove owner. Owner not found.");
+            }
+        }
+
+        // add_prop <Name> <Price> <Type> <Area> <Address> <OwnerID>
+        private void HandleAddProperty(string args)
+        {
+            var tokens = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length != 6)
+            {
+                Console.WriteLine("Incorrect command arguments.");
+                Console.WriteLine("Usage: add_prop <Name> <Price> <Type> <Area> <Address> <OwnerID>");
+                return;
+            }
+
+            var name = tokens[0];
+            var priceString = tokens[1];
+            var type = tokens[2];
+            var areaString = tokens[3];
+            var address = tokens[4];
+            var ownerIdString = tokens[5];
+
+            if (!int.TryParse(areaString, out int area))
+            {
+                Console.WriteLine("Invalid area value.");
+                return;
+            }
+
+            if (!int.TryParse(ownerIdString, out int ownerId))
+            {
+                Console.WriteLine("Invalid owner ID.");
+                return;
+            }
+
+            if (!TryParsePrice(priceString, out float price))
+            {
+                Console.WriteLine("Invalid price value.");
+                return;
+            }
+
+            var property = new PropertyModel(
+                id: 0,          // will be set by PropertyService
+                name: name,
+                price: price,
+                type: type,
+                area: area,
+                address: address,
+                ownerId: ownerId
+            );
+
+            var success = _propertyService.AddProperty(property, _ownerService);
+            if (!success)
+            {
+                Console.WriteLine("Failed to add property.");
+            }
+        }
+
+        // del_prop <PropertyID>
+        private void HandleDeleteProperty(string args)
+        {
+            var tokens = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length != 1)
+            {
+                Console.WriteLine("Incorrect command arguments.");
+                Console.WriteLine("Usage: del_prop <PropertyID>");
+                return;
+            }
+
+            if (!int.TryParse(tokens[0], out int propertyId))
+            {
+                Console.WriteLine("Invalid property ID.");
+                return;
+            }
+
+            var success = _propertyService.RemoveProperty(propertyId);
+            if (!success)
+            {
+                Console.WriteLine("A property with this id has not been found.");
+            }
+        }
+
+        // print_props -type rent -minarea 50 -maxarea 120 -name Studio -address Madrid
+        private void HandlePrintProperties(string args)
+        {
+            string? type = null;
+            int? minArea = null;
+            int? maxArea = null;
+            string? name = null;
+            string? address = null;
+
+            var tokens = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < tokens.Length - 1; i++)
+            {
+                switch (tokens[i])
+                {
+                    case "-type":
+                        type = tokens[++i];
+                        break;
+                    case "-minarea":
+                    case "-min_area":
+                        if (int.TryParse(tokens[++i], out int min))
+                            minArea = min;
+                        break;
+                    case "-maxarea":
+                    case "-max_area":
+                        if (int.TryParse(tokens[++i], out int max))
+                            maxArea = max;
+                        break;
+                    case "-name":
+                        name = tokens[++i];
+                        break;
+                    case "-address":
+                        address = tokens[++i];
+                        break;
+                }
+            }
+
+            _propertyService.DisplayProperties(
+                _ownerService._owners,
+                type,
+                minArea,
+                maxArea,
+                name,
+                address
+            );
+        }
+
+        private bool TryParsePrice(string priceString, out float price)
+        {
+            if (float.TryParse(priceString, NumberStyles.Float, CultureInfo.InvariantCulture, out price))
+                return true;
+
+            if (float.TryParse(priceString, NumberStyles.Float, CultureInfo.CurrentCulture, out price))
+                return true;
+
+            return false;
         }
 
         private void ShowHelp()
@@ -177,7 +257,7 @@ namespace PropertyManager.core
             Console.WriteLine("  add_prop <Name> <Price> <Type: rent | sell> <Area> <Address> <OwnerID>");
             Console.WriteLine("  del_prop <PropertyID>");
             Console.WriteLine("  print_owners");
-            Console.WriteLine("  print_props -type <rent|buy> -minarea <Area> -maxarea <Area> -name <Name> -address <Address>");
+            Console.WriteLine("  print_props [-type <rent|sell>] [-minarea/-min_area <Area>] [-maxarea/-max_area <Area>] [-name <Name>] [-address <Address>]");
         }
 
         public void RunInteractive()
@@ -190,10 +270,9 @@ namespace PropertyManager.core
                 var input = Console.ReadLine();
                 if (input?.ToLower() == "exit")
                     break;
-                
-                ExecuteCommand(input ?? "");    
+
+                ExecuteCommand(input ?? string.Empty);
             }
-            
         }
 
         public void RunFromFile(string filePath)

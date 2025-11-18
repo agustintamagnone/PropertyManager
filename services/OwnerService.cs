@@ -1,40 +1,46 @@
 ﻿using PropertyManager.models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PropertyManager.services
 {
     internal class OwnerService
     {
         public List<OwnerModel> _owners = new List<OwnerModel>();
-
-        public void AddOwner(OwnerModel owner)
+        
+        // Simple auto-increment ID for owners
+        private int _nextOwnerId = 1;
+        
+        public bool AddOwner(string nationalId, string name, string phoneNumber)
         {
             var isDuplicate = _owners.Any(o =>
-                o.PhoneNumber == owner.PhoneNumber || o.NationalId == owner.NationalId);
+                o.NationalId == nationalId || o.PhoneNumber == phoneNumber);
 
             if (isDuplicate)
-                Console.WriteLine("Owner cannot be added as it already exits.");
-            else
             {
-                _owners.Add(owner);
-                Console.WriteLine("Owner " + owner.Name + " added succesfully!");
-            }              
+                Console.WriteLine("Owner cannot be added as it already exists.");
+                return false;
+            }
+
+            var owner = new OwnerModel(_nextOwnerId++, nationalId, name, phoneNumber);
+            _owners.Add(owner);
+
+            Console.WriteLine($"Owner {owner.Name} added successfully with ID {owner.Id}!");
+            return true;
         }
 
-        public void RemoveOwner(int ownerId, List<PropertyModel> properties)
+        public bool RemoveOwner(int ownerId, List<PropertyModel> properties)
         {
             if (_owners.Any(o => o.Id == ownerId))
             {
                 properties.RemoveAll(p => p.OwnerId == ownerId);
                 _owners.RemoveAll(o => o.Id == ownerId);
+                Console.WriteLine($"Owner {ownerId} removed successfully!");
+                return true;
             }
             else
+            {
                 Console.WriteLine("Owner does not exist.");
+                return false;
+            }
         }
 
         public void DisplayOwners(List<PropertyModel> properties)
@@ -43,6 +49,7 @@ namespace PropertyManager.services
             {
                 int count = properties.Count(p => p.OwnerId == owner.Id);
 
+                Console.WriteLine("------------------OWNER------------------");
                 Console.WriteLine($"Owner ID: {owner.Id}");
                 Console.WriteLine($"National ID: {owner.NationalId}");
                 Console.WriteLine($"Name: {owner.Name}");

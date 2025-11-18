@@ -1,40 +1,42 @@
 ﻿using PropertyManager.models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace PropertyManager.services
 {
     internal class PropertyService
     {
         public List<PropertyModel> _properties = new List<PropertyModel>();
-        private readonly OwnerService _ownerService;
+        private readonly OwnerService _ownerService = new OwnerService();
+        private int _nextPropertyId = 1;
 
-        public void AddProperty(PropertyModel property, _ownerService)
+        public bool AddProperty(PropertyModel property, OwnerService ownerService)
         {
-            if (property.OwnerId == null)
-                Console.WriteLine("Failed to add new property. Please try again!");
-            else
+            // Check owner exists
+            bool ownerExists = ownerService._owners.Any(o => o.Id == property.OwnerId);
+            if (!ownerExists)
             {
-                _properties.Add(property);
-                Console.WriteLine("Property " + property.PropertyId + " has been succesfully added!");
+                Console.WriteLine($"Property cannot be added. Owner with ID {property.OwnerId} does not exist.");
+                return false;
             }
+            
+            property.PropertyId = _nextPropertyId++;
+
+            _properties.Add(property);
+            Console.WriteLine($"Property with ID {property.PropertyId} has been successfully added!");
+            return true;
         }
 
-        public void RemoveProperty(int propertyId)
+        public bool RemoveProperty(int propertyId)
         {
-            if (_properties.Any(p => p.PropertyId == propertyId))
+            int removed = _properties.RemoveAll(p => p.PropertyId == propertyId);
+
+            if (removed > 0)
             {
-                _properties.RemoveAll(p => p.PropertyId == propertyId);
-                Console.WriteLine("Property " + propertyId + " removed succesfully!");
+                Console.WriteLine($"Property {propertyId} removed successfully!");
+                return true;
             }
-            else
-                Console.WriteLine("Property with ID: " + propertyId + " not found, please try again!");
+
+            Console.WriteLine($"Property with ID: {propertyId} not found, please try again!");
+            return false;
         }
         
         // Order: Owners List, Type: "rent" || "sell", minArea, maxArea, name, address
@@ -56,6 +58,7 @@ namespace PropertyManager.services
                 {
                     string? ownerName = owners.FirstOrDefault(o => o.Id == property.OwnerId)?.Name;
 
+                    Console.WriteLine("----------------PROPERTY-----------------");
                     Console.WriteLine($"Property ID: {property.PropertyId}");
                     Console.WriteLine($"Name: {property.Name}");
                     Console.WriteLine($"Price: {property.Price}");
@@ -63,7 +66,7 @@ namespace PropertyManager.services
                     Console.WriteLine($"Area: {property.Area}");
                     Console.WriteLine($"Address: {property.Address}");
                     Console.WriteLine($"Owner ID: {property.OwnerId} - Owner Name: {ownerName}");
-                    Console.WriteLine("------------------------------------------------------------");
+                    Console.WriteLine("-----------------------------------------");
                 }
 
         }
