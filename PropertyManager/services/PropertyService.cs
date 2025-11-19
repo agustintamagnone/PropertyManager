@@ -5,12 +5,13 @@ namespace PropertyManager.services
     public class PropertyService
     {
         public List<PropertyModel> _properties = new List<PropertyModel>();
-        private readonly OwnerService _ownerService = new OwnerService();
+        
+        // _nextPropertyId is an auto-increment ID for Properties.
         private int _nextPropertyId = 1;
 
         public bool AddProperty(PropertyModel property, OwnerService ownerService)
         {
-            // Check owner exists
+            // ownerExists checks if the owner passed by parameter, exists.
             bool ownerExists = ownerService._owners.Any(o => o.Id == property.OwnerId);
             if (!ownerExists)
             {
@@ -68,9 +69,6 @@ namespace PropertyManager.services
                     Console.WriteLine($"Owner ID: {property.OwnerId} - Owner Name: {ownerName}");
                     Console.WriteLine("-----------------------------------------");
                 }
-
         }
-
     }
 }
-

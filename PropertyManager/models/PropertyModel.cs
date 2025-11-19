@@ -9,7 +9,7 @@
         public int Area { get; set; }
         public string? Address { get; set; }
 
-        // Foreign key reference to owner
+        // This is a Foreign key for OwnerModel.
         public int? OwnerId { get; set; }
 
         public PropertyModel(int id, string? name, float price, string? type, int area, string? address, int ownerId)

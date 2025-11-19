@@ -6,7 +6,7 @@ namespace PropertyManager.services
     {
         public List<OwnerModel> _owners = new List<OwnerModel>();
         
-        // Simple auto-increment ID for owners
+        // _nextOwnerId is an auto-increment ID for Owners.
         private int _nextOwnerId = 1;
         
         public bool AddOwner(string nationalId, string name, string phoneNumber)
@@ -36,11 +36,9 @@ namespace PropertyManager.services
                 Console.WriteLine($"Owner {ownerId} removed successfully!");
                 return true;
             }
-            else
-            {
-                Console.WriteLine("Owner does not exist.");
-                return false;
-            }
+            
+            Console.WriteLine($"Owner {ownerId} does not exist.");
+            return false;
         }
 
         public void DisplayOwners(List<PropertyModel> properties)

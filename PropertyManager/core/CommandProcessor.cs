@@ -151,7 +151,7 @@ namespace PropertyManager.core
             }
 
             var property = new PropertyModel(
-                id: 0,          // will be set by PropertyService
+                id: 0,
                 name: name,
                 price: price,
                 type: type,
