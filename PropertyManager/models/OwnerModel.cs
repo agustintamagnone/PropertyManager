@@ -1,7 +1,7 @@
 ﻿
 namespace PropertyManager.models
 {
-    internal class OwnerModel
+    public class OwnerModel
     {
         public int Id { get; set; }
         public string? NationalId { get; set; }

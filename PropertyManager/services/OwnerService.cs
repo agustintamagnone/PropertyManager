@@ -2,7 +2,7 @@
 
 namespace PropertyManager.services
 {
-    internal class OwnerService
+    public class OwnerService
     {
         public List<OwnerModel> _owners = new List<OwnerModel>();
         

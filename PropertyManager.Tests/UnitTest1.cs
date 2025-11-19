@@ -1,10 +1,13 @@
-﻿namespace PropertyManager.Tests;
+﻿using PropertyManager.services;
 
-public class UnitTest1
+namespace PropertyManager.Tests;
+
+public class OwnerServiceTests
 {
     [Fact]
-    public void Test1()
+    public void Builder_ValidClass()
     {
-
+        var servicio = new OwnerService();
+        Assert.NotNull(servicio);
     }
 }

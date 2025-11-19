@@ -1,6 +1,6 @@
 ﻿namespace PropertyManager.models
 {
-    internal class PropertyModel
+    public class PropertyModel
     {
         public int PropertyId {  get; set; }
         public string? Name { get; set; }

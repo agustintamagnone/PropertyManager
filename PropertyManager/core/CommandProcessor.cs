@@ -4,7 +4,7 @@ using PropertyManager.services;
 
 namespace PropertyManager.core
 {
-    internal class CommandProcessor
+    public class CommandProcessor
     {
         private readonly OwnerService _ownerService;
         private readonly PropertyService _propertyService;
