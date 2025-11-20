@@ -41,7 +41,7 @@ public class ProgramTests
         string folderPath = Path.GetFullPath(
             Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
 
-        string filePath = Path.Combine(folderPath, "properties01.txt");
+        string filePath = Path.Combine(folderPath, "properties.txt");
 
         // Create a simple properties file
         File.WriteAllText(filePath,
@@ -75,7 +75,7 @@ public class ProgramTests
 
         var output = sw.ToString();
 
-        Assert.Contains("Reading input file: properties01.txt", output);
+        Assert.Contains("Reading input file: properties.txt", output);
         Assert.Contains("Owner ID:", output);
         Assert.Contains("Test_User", output);
     }
