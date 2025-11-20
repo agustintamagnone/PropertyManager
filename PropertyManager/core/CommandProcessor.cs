@@ -268,10 +268,12 @@ namespace PropertyManager.core
             {
                 Console.Write("> ");
                 var input = Console.ReadLine();
-                if (input?.ToLower() == "exit")
+                if (input is null)
+                    break;
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
                     break;
 
-                ExecuteCommand(input ?? string.Empty);
+                ExecuteCommand(input);
             }
         }
 

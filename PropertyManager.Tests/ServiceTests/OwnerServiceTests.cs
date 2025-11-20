@@ -3,6 +3,8 @@ using PropertyManager.models;
 
 namespace PropertyManager.Tests;
 
+[Collection("Non-Parallel")]
+
 public class OwnerServiceTests
 {
     [Fact] //Caso base para probar funcionamiento del constructor

@@ -2,6 +2,7 @@ using PropertyManager.models;
 
 namespace PropertyManager.Tests.ModelsTests;
 
+[Collection("Non-Parallel")]
 public class PropertyModelTests
 {
     // PMT_001

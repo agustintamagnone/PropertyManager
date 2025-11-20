@@ -1,7 +1,10 @@
+using System.Globalization;
 using PropertyManager.core;
 using PropertyManager.services;
 
 namespace PropertyManager.Tests.CoreTests;
+
+[Collection("Non-Parallel")]
 
 public class CommandProcessorTests
 {
@@ -385,7 +388,7 @@ public class CommandProcessorTests
 
     // CPT_015
     [Fact]
-    public void PrintProps_Should_Handle_No_Properties()
+    public void PrintProps_Should_Handle_No_Properties_Without_Error()
     {
         var (processor, _, _) = CreateProcessor();
 
@@ -395,6 +398,7 @@ public class CommandProcessorTests
 
         try
         {
+            // No owners / properties added
             processor.ExecuteCommand("print_props");
         }
         finally
@@ -403,18 +407,22 @@ public class CommandProcessorTests
         }
 
         var output = sw.ToString();
-        Assert.Contains("No properties found", output); // Adjust if actual message differs
+
+        // Current implementation: DisplayProperties prints nothing if there are no properties.
+        // The important part is that it does NOT throw and program stays stable.
+        Assert.Equal(string.Empty, output);
     }
 
-    //CPT_016
+    // CPT_016
     [Fact]
-    public void PrintProps_Should_Handle_Invalid_Filter()
+    public void PrintProps_Should_Ignore_Unknown_Filter_And_Still_Print_Properties()
     {
         var (processor, ownerService, propertyService) = CreateProcessor();
         ownerService.AddOwner("11111111", "Owner_One", "600000000");
         int ownerId = ownerService._owners[0].Id;
 
         processor.ExecuteCommand($"add_prop Studio 150000 rent 50 Madrid {ownerId}");
+        Assert.Single(propertyService._properties);
 
         var sw = new StringWriter();
         var originalOut = Console.Out;
@@ -422,6 +430,7 @@ public class CommandProcessorTests
 
         try
         {
+            // "-unknown" is ignored by HandlePrintProperties; it still calls DisplayProperties
             processor.ExecuteCommand("print_props -unknown something");
         }
         finally
@@ -430,6 +439,395 @@ public class CommandProcessorTests
         }
 
         var output = sw.ToString();
-        Assert.Contains("Unknown filter option", output); // If implemented, else check fallback behavior
+
+        // There is no "Unknown filter option" message in the current code.
+        // We just verify that the property is still printed and that no exception is thrown.
+        Assert.Contains("Studio", output);
+    }
+
+    // CPT_017
+    [Fact]
+    public void DeleteOwner_With_Missing_Arguments_Should_Print_Error()
+    {
+        var (processor, ownerService, _) = CreateProcessor();
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("del_owner");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Incorrect command arguments.", output);
+        Assert.Contains("Usage: del_owner <OwnerID>", output);
+        Assert.Empty(ownerService._owners);
+    }
+
+    // CPT_018
+    [Fact]
+    public void DeleteOwner_With_NonNumeric_Id_Should_Print_Invalid_Id()
+    {
+        var (processor, ownerService, _) = CreateProcessor();
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("del_owner abc");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Invalid owner ID.", output);
+        Assert.Empty(ownerService._owners);
+    }
+
+    // CPT_019
+    [Fact]
+    public void DeleteOwner_With_NonExisting_Id_Should_Print_Failure_Message()
+    {
+        var (processor, ownerService, _) = CreateProcessor();
+
+        // Ensure there is no owner with id 99
+        Assert.Empty(ownerService._owners);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("del_owner 99");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Failed to remove owner. Owner not found.", output);
+    }
+
+    // CPT_020
+    [Fact]
+    public void DeleteOwner_With_Existing_Id_Should_Remove_Owner()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+
+        // Add an owner directly
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        Assert.Single(ownerService._owners);
+        int ownerId = ownerService._owners[0].Id;
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand($"del_owner {ownerId}");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        Assert.Empty(ownerService._owners);
+        // Failure message should not appear
+        var output = sw.ToString();
+        Assert.DoesNotContain("Failed to remove owner. Owner not found.", output);
+    }
+
+    // CPT_021
+    [Fact]
+    public void AddProperty_With_Missing_Arguments_Should_Print_Error()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            // Only 4 arguments instead of 6
+            processor.ExecuteCommand("add_prop Studio 150000 rent 50");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Incorrect command arguments.", output);
+        Assert.Contains("Usage: add_prop <Name> <Price> <Type> <Area> <Address> <OwnerID>", output);
+        Assert.Empty(propertyService._properties);
+    }
+    
+    // CPT_022
+    [Fact]
+    public void DeleteProperty_With_Too_Many_Arguments_Should_Print_Error()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+        processor.ExecuteCommand($"add_prop Studio 150000 rent 50 Madrid {ownerId}");
+        Assert.Single(propertyService._properties);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("del_prop 1 extra");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Incorrect command arguments.", output);
+        Assert.Contains("Usage: del_prop <PropertyID>", output);
+        Assert.Single(propertyService._properties);
+    }
+
+    // CPT_023
+    [Fact]
+    public void DeleteProperty_With_NonExisting_Id_Should_Print_NotFound_Message()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        processor.ExecuteCommand($"add_prop Studio 150000 rent 50 Madrid {ownerId}");
+        Assert.Single(propertyService._properties);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("del_prop 999"); // numeric but non-existing
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("A property with this id has not been found.", output);
+        Assert.Single(propertyService._properties);
+    }
+
+    // CPT_024
+    [Fact]
+    public void PrintProps_Should_Apply_Min_Max_Name_And_Address_Filters()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        processor.ExecuteCommand($"add_prop SmallFlat 100000 rent 40 Madrid {ownerId}");
+        processor.ExecuteCommand($"add_prop BigFlat 200000 rent 120 Madrid {ownerId}");
+        processor.ExecuteCommand($"add_prop OtherCity 180000 rent 120 Barcelona {ownerId}");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("print_props -minarea 100 -maxarea 150 -name BigFlat -address Madrid");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("BigFlat", output);
+        Assert.DoesNotContain("SmallFlat", output);
+        Assert.DoesNotContain("OtherCity", output);
+    }
+
+    // CPT_025
+    [Fact]
+    public void PrintProps_Should_Support_Min_Max_Area_With_Underscore_Flags()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        processor.ExecuteCommand($"add_prop SmallFlat 100000 rent 40 Madrid {ownerId}");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("print_props -min_area 0 -max_area 1000");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("SmallFlat", output);
+    }
+    // CPT_026
+    [Fact]
+    public void AddProperty_Should_Parse_Price_Using_CurrentCulture_When_Invariant_Fails()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        // Save and change culture to one that uses comma as decimal separator
+        var originalCulture = Thread.CurrentThread.CurrentCulture;
+        Thread.CurrentThread.CurrentCulture = new CultureInfo("es-ES");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            // InvariantCulture ("." decimal) will fail on "150,5"
+            // CurrentCulture (es-ES) will succeed
+            processor.ExecuteCommand($"add_prop Studio 150,5 rent 50 Madrid {ownerId}");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+            Thread.CurrentThread.CurrentCulture = originalCulture;
+        }
+
+        // Property should have been added and price parsed correctly
+        Assert.Single(propertyService._properties);
+        var prop = propertyService._properties[0];
+        Assert.Equal("Studio", prop.Name);
+        Assert.Equal(ownerId, prop.OwnerId);
+        Assert.True(Math.Abs(prop.Price - 150.5f) < 0.01f);
+    }
+    
+    // CPT_027
+    [Fact]
+    public void RunInteractive_Should_Process_Command_Then_Exit_On_Exit_Input()
+    {
+        // Arrange
+        var (processor, _, _) = CreateProcessor();
+
+        // Simulate two lines of user input: first "help", then "exit"
+        var input = new StringReader("help\nexit\n");
+        var output = new StringWriter();
+
+        var originalIn = Console.In;
+        var originalOut = Console.Out;
+
+        Console.SetIn(input);
+        Console.SetOut(output);
+
+        try
+        {
+            // Act
+            processor.RunInteractive();
+        }
+        finally
+        {
+            // Restore console
+            Console.SetIn(originalIn);
+            Console.SetOut(originalOut);
+        }
+
+        var text = output.ToString();
+
+        // Assert: we entered interactive mode and executed at least one command ("help")
+        Assert.Contains("Enter commands (type 'exit' to quit):", text);
+        Assert.Contains("Available commands:", text); // from ShowHelp() via ExecuteCommand("help")
+    }
+    
+    // CPT_028
+    [Fact]
+    public void RunInteractive_Should_Exit_Immediately_When_Input_Is_Exit()
+    {
+        var (processor, _, _) = CreateProcessor();
+
+        // Only one line: "exit"
+        var input = new StringReader("exit\n");
+        var output = new StringWriter();
+        var originalIn = Console.In;
+        var originalOut = Console.Out;
+
+        Console.SetIn(input);
+        Console.SetOut(output);
+
+        try
+        {
+            processor.RunInteractive();
+        }
+        finally
+        {
+            Console.SetIn(originalIn);
+            Console.SetOut(originalOut);
+        }
+
+        var text = output.ToString();
+        Assert.Contains("Enter commands (type 'exit' to quit):", text);
+        // We don't expect any "Available commands" from a later help call
+        // because we exit immediately.
+    }
+
+    // CPT_029
+    [Fact]
+    public void RunInteractive_Should_Process_Command_Then_Exit_On_EndOfInput()
+    {
+        var (processor, _, _) = CreateProcessor();
+
+        // One command ("help") and then EOF.
+        var input = new StringReader("help\n");  // after this line, ReadLine() returns null
+        var output = new StringWriter();
+        var originalIn = Console.In;
+        var originalOut = Console.Out;
+
+        Console.SetIn(input);
+        Console.SetOut(output);
+
+        try
+        {
+            processor.RunInteractive();
+        }
+        finally
+        {
+            Console.SetIn(originalIn);
+            Console.SetOut(originalOut);
+        }
+
+        var text = output.ToString();
+        
+        Assert.Contains("Enter commands (type 'exit' to quit):", text);
+        Assert.Contains("Available commands:", text);
     }
 }

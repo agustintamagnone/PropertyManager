@@ -3,6 +3,8 @@ using PropertyManager.services;
 
 namespace PropertyManager.Tests.ServiceTests;
 
+[Collection("Non-Parallel")]
+
 public class PropertyServiceTests
 {
     // Helper to create a default owner and return OwnerService + ownerId
@@ -365,5 +367,42 @@ public class PropertyServiceTests
         var output = sw.ToString();
         Assert.True(string.IsNullOrWhiteSpace(output)); // No output expected
     }
+    
+    // PST_014
+    [Fact]
+    public void DisplayProperties_Should_Exclude_Properties_With_Null_Type_When_Filter_Is_Set()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
 
+        // One property with null Type
+        propertyService.AddProperty(
+            new PropertyModel(0, "NoTypeProp", 100000f, null!, 40, "Madrid", ownerId),
+            ownerService);
+
+        // One normal rent property
+        propertyService.AddProperty(
+            new PropertyModel(0, "RentProp", 150000f, "rent", 50, "Madrid", ownerId),
+            ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            // Apply type filter: "rent"
+            propertyService.DisplayProperties(ownerService._owners, filter: "rent");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+
+        // Only RentProp should be printed; NoTypeProp must be excluded
+        Assert.Contains("RentProp", output);
+        Assert.DoesNotContain("NoTypeProp", output);
+    }
 }

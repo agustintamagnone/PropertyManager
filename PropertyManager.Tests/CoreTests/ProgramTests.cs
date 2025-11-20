@@ -1,6 +1,7 @@
 
 namespace PropertyManager.Tests.CoreTests;
 
+[Collection("Non-Parallel")]
 public class ProgramTests
 {
     // PRT_001
