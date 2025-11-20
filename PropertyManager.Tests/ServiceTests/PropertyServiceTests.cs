@@ -198,4 +198,172 @@ public class PropertyServiceTests
         Assert.DoesNotContain("SmallFlat", output);
         Assert.DoesNotContain("OtherCity", output);
     }
+
+    //PST_008
+    [Fact]
+    public void DisplayProperties_Should_Filter_By_Area_Range()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
+
+        propertyService.AddProperty(new PropertyModel(0, "SmallFlat", 100000f, "rent", 40, "Madrid", ownerId), ownerService);
+        propertyService.AddProperty(new PropertyModel(0, "BigFlat", 200000f, "rent", 120, "Madrid", ownerId), ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            propertyService.DisplayProperties(ownerService._owners, null, 30, 60);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("SmallFlat", output);
+        Assert.DoesNotContain("BigFlat", output);
+    }
+
+    //PST_009
+    [Fact]
+    public void DisplayProperties_Should_Filter_By_Address_Two()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
+
+        propertyService.AddProperty(new PropertyModel(0, "MadridProp", 100000f, "rent", 40, "Madrid", ownerId), ownerService);
+        propertyService.AddProperty(new PropertyModel(0, "BarcelonaProp", 200000f, "rent", 80, "Barcelona", ownerId), ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            propertyService.DisplayProperties(ownerService._owners, null, null, null, null, "Madrid");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("MadridProp", output);
+        Assert.DoesNotContain("BarcelonaProp", output);
+    }
+
+    // PST_010
+    [Fact]
+    public void DisplayProperties_Should_Filter_By_MaxArea()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
+
+        propertyService.AddProperty(new PropertyModel(0, "SmallFlat", 100000f, "rent", 40, "Madrid", ownerId), ownerService);
+        propertyService.AddProperty(new PropertyModel(0, "BigFlat", 200000f, "rent", 120, "Madrid", ownerId), ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            propertyService.DisplayProperties(ownerService._owners, null, null, 60);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("SmallFlat", output);
+        Assert.DoesNotContain("BigFlat", output);
+    }
+
+    // PST_011
+    [Fact]
+    public void DisplayProperties_Should_Filter_By_Name()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
+
+        propertyService.AddProperty(new PropertyModel(0, "Studio", 100000f, "rent", 40, "Madrid", ownerId), ownerService);
+        propertyService.AddProperty(new PropertyModel(0, "Apartment", 200000f, "sell", 80, "Barcelona", ownerId), ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            propertyService.DisplayProperties(ownerService._owners, null, null, null, "Studio");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Studio", output);
+        Assert.DoesNotContain("Apartment", output);
+    }
+
+    // PST_012
+    [Fact]
+    public void DisplayProperties_Should_Filter_By_Address()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
+
+        propertyService.AddProperty(new PropertyModel(0, "MadridProp", 100000f, "rent", 40, "Madrid", ownerId), ownerService);
+        propertyService.AddProperty(new PropertyModel(0, "BarcelonaProp", 200000f, "sell", 80, "Barcelona", ownerId), ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            propertyService.DisplayProperties(ownerService._owners, null, null, null, null, "Barcelona");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("BarcelonaProp", output);
+        Assert.DoesNotContain("MadridProp", output);
+    }
+
+    // PST_013
+    [Fact]
+    public void DisplayProperties_Should_Print_Nothing_When_No_Match()
+    {
+        var (ownerService, ownerId) = CreateOwner();
+        var propertyService = new PropertyService();
+
+        propertyService.AddProperty(new PropertyModel(0, "SmallFlat", 100000f, "rent", 40, "Madrid", ownerId), ownerService);
+        propertyService.AddProperty(new PropertyModel(0, "BigFlat", 200000f, "rent", 120, "Madrid", ownerId), ownerService);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            propertyService.DisplayProperties(ownerService._owners, "sell", 200, 300);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.True(string.IsNullOrWhiteSpace(output)); // No output expected
+    }
+
 }

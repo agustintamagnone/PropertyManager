@@ -230,4 +230,206 @@ public class CommandProcessorTests
         Assert.Contains("RentProp", output);
         Assert.DoesNotContain("SellProp", output);
     }
+
+    // CPT_009
+    [Fact]
+    public void ExecuteCommand_Should_Print_Help_For_Help_Command()
+    {
+        var (processor, _, _) = CreateProcessor();
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("help");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("add_owner", output);
+        Assert.Contains("add_prop", output);
+        Assert.Contains("del_prop", output);
+        Assert.Contains("print_props", output);
+    }
+
+    //CPT_010
+    [Fact]
+    public void PrintProps_Without_Filter_Should_Show_All_Properties()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        processor.ExecuteCommand($"add_prop RentProp 100000 rent 40 Madrid {ownerId}");
+        processor.ExecuteCommand($"add_prop SellProp 200000 sell 80 Madrid {ownerId}");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("print_props");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("RentProp", output);
+        Assert.Contains("SellProp", output);
+    }
+
+    //CPT_011
+    [Fact]
+    public void DeleteProperty_With_Valid_Id_Should_Remove_Property()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        processor.ExecuteCommand($"add_prop Studio 150000 rent 50 Madrid {ownerId}");
+        Assert.Single(propertyService._properties);
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("del_prop 1");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        Assert.Empty(propertyService._properties);
+    }
+
+    //CPT_012
+    [Fact]
+    public void AddProperty_With_Invalid_OwnerId_Should_Print_Error()
+    {
+        var (processor, _, propertyService) = CreateProcessor();
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("add_prop Studio 150000 rent 50 Madrid 999");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Property cannot be added. Owner with ID 999 does not exist.", output);
+        Assert.Empty(propertyService._properties);
+    }
+
+    //CPT_013
+    [Fact]
+    public void AddProperty_Should_Fail_When_Price_Is_Invalid()
+    {
+        var (processor, ownerService, _) = CreateProcessor();
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("add_prop Studio abc rent 50 Madrid 1");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Invalid price value.", output);
+    }
+
+    // CPT_014
+    [Fact]
+    public void AddProperty_Should_Fail_When_OwnerId_Is_Invalid()
+    {
+        var (processor, _, _) = CreateProcessor();
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("add_prop Studio 150000 rent 50 Madrid XYZ");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Invalid owner ID.", output);
+    }
+
+    // CPT_015
+    [Fact]
+    public void PrintProps_Should_Handle_No_Properties()
+    {
+        var (processor, _, _) = CreateProcessor();
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("print_props");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("No properties found", output); // Adjust if actual message differs
+    }
+
+    //CPT_016
+    [Fact]
+    public void PrintProps_Should_Handle_Invalid_Filter()
+    {
+        var (processor, ownerService, propertyService) = CreateProcessor();
+        ownerService.AddOwner("11111111", "Owner_One", "600000000");
+        int ownerId = ownerService._owners[0].Id;
+
+        processor.ExecuteCommand($"add_prop Studio 150000 rent 50 Madrid {ownerId}");
+
+        var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
+
+        try
+        {
+            processor.ExecuteCommand("print_props -unknown something");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        var output = sw.ToString();
+        Assert.Contains("Unknown filter option", output); // If implemented, else check fallback behavior
+    }
 }

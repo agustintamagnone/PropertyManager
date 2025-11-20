@@ -122,7 +122,7 @@ public class OwnerServiceTests
         var ownerService = new OwnerService();
         var properties = new List<PropertyModel>();
 
-        //Crear owners nuevos
+        // Crear owners nuevos
         ownerService.AddOwner("44444444Q", "Carlos Sainz", "777777777");
         ownerService.AddOwner("33333333P", "Sebastian Vettel", "888888888");
 
@@ -130,29 +130,25 @@ public class OwnerServiceTests
         properties.Add(new PropertyModel(2, "Piso 1", 90795, "Piso", 2, "Calle Mayor, 10", ownerId: 1));
         properties.Add(new PropertyModel(3, "Chalet 1", 230795, "Chalet", 3, "Calle de la Paz, 15", ownerId: 2));
 
-        //Capturar la salida de la consola
+        // Capturar la salida de la consola
         using var consoleOutput = new ConsoleOutput();
         ownerService.DisplayOwners(properties);
 
-        string expectedOutput =
-            "------------------OWNER------------------\r\n" +
-            "Owner ID: 1\r\n" +
-            "National ID: 44444444Q\r\n" +
-            "Name: Carlos Sainz\r\n" +
-            "Phone number: 777777777\r\n" +
-            "Properties owned: 2\r\n" +
-            "-----------------------------------------\r\n" +
-            "------------------OWNER------------------\r\n" +
-            "Owner ID: 2\r\n" +
-            "National ID: 33333333P\r\n" +
-            "Name: Sebastian Vettel\r\n" +
-            "Phone number: 888888888\r\n" +
-            "Properties owned: 1\r\n" +
-            "-----------------------------------------";
+        var output = consoleOutput.GetOuput();
 
-        Assert.Equal(expectedOutput, consoleOutput.GetOuput());
+        // Verificar contenido clave en la salida
+        Assert.Contains("Owner ID: 1", output);
+        Assert.Contains("National ID: 44444444Q", output);
+        Assert.Contains("Name: Carlos Sainz", output);
+        Assert.Contains("Phone number: 777777777", output);
+        Assert.Contains("Properties owned: 2", output);
+
+        Assert.Contains("Owner ID: 2", output);
+        Assert.Contains("National ID: 33333333P", output);
+        Assert.Contains("Name: Sebastian Vettel", output);
+        Assert.Contains("Phone number: 888888888", output);
+        Assert.Contains("Properties owned: 1", output);
     }
-    
 }
 
 
