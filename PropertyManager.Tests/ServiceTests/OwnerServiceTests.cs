@@ -1,7 +1,7 @@
 ﻿using PropertyManager.services;
 using PropertyManager.models;
 
-namespace PropertyManager.Tests;
+namespace PropertyManager.Tests.ServiceTests;
 
 [Collection("Non-Parallel")]
 
