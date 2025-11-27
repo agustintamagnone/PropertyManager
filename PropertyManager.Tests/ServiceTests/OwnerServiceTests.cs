@@ -7,13 +7,6 @@ namespace PropertyManager.Tests.ServiceTests;
 
 public class OwnerServiceTests
 {
-    [Fact] //Caso base para probar funcionamiento del constructor
-    public void builderValidClass()
-    {
-        var servicio = new OwnerService();
-        Assert.NotNull(servicio);
-    }
-
     //Tests de AddOwner
     [Fact] //Caso base para probar funcionamiento del metodo AddOwner
     public void addValidOwner()

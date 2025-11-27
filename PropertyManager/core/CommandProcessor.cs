@@ -60,14 +60,9 @@ namespace PropertyManager.core
 
         private static (string Command, string Arguments) ParseCommandLine(string commandLine)
         {
-            if (string.IsNullOrWhiteSpace(commandLine))
-                return (string.Empty, string.Empty);
-
             var parts = commandLine.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-
             var cmd = parts.Length > 0 ? parts[0] : string.Empty;
             var args = parts.Length > 1 ? parts[1] : string.Empty;
-
             return (cmd, args);
         }
 
